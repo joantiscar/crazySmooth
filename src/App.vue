@@ -3,8 +3,6 @@
 </template>
 <script>
   import Phaser from 'phaser'
-  import tileSet from './assets/tileset.png'
-  import itemSet from './assets/tileset.png'
   import firstmap_Tiles from './assets/maps/firstmap_Tiles.csv'
   import firstmap_Items from './assets/maps/firstmap_Items.csv'
 
@@ -30,7 +28,6 @@
         scene: {
           preload() {
             console.log('PRELOAD')
-            this.load.image('tileset', tileset);
             this.load.tilemapCSV('firstmap_Items', firstmap_Items)
             this.load.tilemapCSV('firstmap_Tiles', firstmap_Tiles)
 
