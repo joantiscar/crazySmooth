@@ -24,7 +24,7 @@
             default: 'arcade',
             arcade: {
               gravity: {
-                y: 100
+                y:  700
               },
               debug :true
             }
@@ -45,6 +45,7 @@
               let tileset = map.addTilesetImage("tileset", "tileset")
               let floor = map.createStaticLayer("floor", tileset, 0, 0)
               let elevation = map.createStaticLayer("elevation",tileset,0,0)
+
               floor.setCollisionByExclusion([-1]);
               elevation.setCollisionByExclusion([-1]);
 
@@ -58,9 +59,7 @@
               let spawnpoint = map.findObject('player', obj => obj.name === 'spanwPoint');
 
               player = this.physics.add.sprite(spawnpoint.x, spawnpoint.y, 'player');
-              this.player.setCollideWorldBounds(true)
               player.setScale(2);
-              player.setBounce(0.2);
               player.lives = 3;
               //
               // // Animació de correr del player
@@ -94,7 +93,7 @@
 
                 player.setFrame(0)
               }
-              if (player.body.touching.down && this.cursors.up.isDown) {
+              if (this.cursors.up.isDown && player.body.onFloor()) {
                 player.setVelocityY(-200)
               }
 
