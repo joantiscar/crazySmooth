@@ -41,8 +41,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":172,
-                 "y":472
+                 "x":168,
+                 "y":448
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -72,15 +72,15 @@
          "transparentcolor":"#000000"
         }, 
         {
-         "columns":3,
+         "columns":12,
          "firstgid":925,
          "image":"player.png",
-         "imageheight":44,
-         "imagewidth":84,
+         "imageheight":407,
+         "imagewidth":350,
          "margin":0,
          "name":"player",
          "spacing":0,
-         "tilecount":6,
+         "tilecount":216,
          "tileheight":22,
          "tilewidth":28,
          "transparentcolor":"#000000"

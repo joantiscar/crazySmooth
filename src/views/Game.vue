@@ -18,8 +18,8 @@
         // PHASER 3.0 -> phaser
         let config = {
           type: Phaser.AUTO,
-          width: window.innerWidth-25,
-          height: window.innerHeight-20,
+          width: window.innerWidth-50,
+          height: window.innerHeight-50,
           physics: {
             default: 'arcade',
             arcade: {
@@ -35,7 +35,7 @@
               console.log("PRELOAD");
               this.load.image('tileset', _TILESET_SET)
               this.load.tilemapTiledJSON("map",_JSON_MAP)
-              this.load.spritesheet('player',_PLAYER ,{ frameWidth: 28, frameHeight: 22 })
+              this.load.spritesheet('player',_PLAYER ,{ frameWidth: 50, frameHeight: 37 })
 
             },
             create() {
@@ -59,16 +59,28 @@
               let spawnpoint = map.findObject('player', obj => obj.name === 'spanwPoint');
 
               player = this.physics.add.sprite(spawnpoint.x, spawnpoint.y, 'player');
-              player.setScale(2);
               player.lives = 3;
               //
               // // Animació de correr del player
               //
               this.physics.add.collider(player,floor)
               //
+              player.body.setSize(24, 37, 12, 0)
               this.anims.create({
                 key: 'idle',
-                frames: this.anims.generateFrameNumbers('player', { start: 3, end: 5 }),
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+                frameRate: 5,
+                repeat: -1
+              })
+              this.anims.create({
+                key: 'runRight',
+                frames: this.anims.generateFrameNumbers('player', { start: 8, end: 13 }),
+                frameRate: 5,
+                repeat: -1
+              })
+              this.anims.create({
+                key: 'runLeft',
+                frames: this.anims.generateFrameNumbers('player', { start: 8, end: 13 }),
                 frameRate: 5,
                 repeat: -1
               })
@@ -76,22 +88,29 @@
 
             },
             update () {
-              player.anims.play('idle', true)
+              if (player.body.velocity.x === 0) player.anims.play('idle', true)
 
               // ESTE EL QUE S'executa continuament al Game loop -> 60 vegades per segon o FPS
 
               // INPUT EVENTS
               if (this.cursors.left.isDown) {
                 player.setVelocityX(-160)
-                player.setFrame(2)
+                player.anims.play('runLeft', true)
+                player.flipX = true
+
+
               } else if (this.cursors.right.isDown) {
                 player.setVelocityX(160)
-                player.setFrame(1)
-              } else {
-                if (player.body.velocity.x > 0) player.setVelocityX(player.body.velocity.x - 1)
-                if (player.body.velocity.x < 0) player.setVelocityX(player.body.velocity.x + 1)
+                player.anims.play('runRight', true)
+                player.flipX = false
 
-                player.setFrame(0)
+
+
+              } else {
+                if (player.body.velocity.x > 0) player.setVelocityX(player.body.velocity.x - 20)
+                if (player.body.velocity.x < 0) player.setVelocityX(player.body.velocity.x + 20)
+                if (player.body.velocity.x < 20 && player.body.velocity.x > -20) player.setVelocityX(0)
+
               }
               if (this.cursors.up.isDown && player.body.onFloor()) {
                 player.setVelocityY(-200)
