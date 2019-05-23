@@ -53,11 +53,18 @@
               // Habilitem un cursor per a les fletxes del teclat
               this.cursors = this.input.keyboard.createCursorKeys();
 
+              this.cameras.main.backgroundColor.setTo(69, 911, 420)
+
+
               // La càmara no sortirà del món
               camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
               let spawnpoint = map.findObject('player', obj => obj.name === 'spanwPoint');
 
+              this.debugText = this.add.text(16, 16, 'isJumping: false', { fontSize: '32px', fill: '#000' });
+              this.debugText.setColor('#FFFFFF')
+
+              this.debugText.setScrollFactor(0)
               player = this.physics.add.sprite(spawnpoint.x, spawnpoint.y, 'player');
               player.lives = 3;
               //
@@ -84,24 +91,38 @@
                 frameRate: 5,
                 repeat: -1
               })
+              this.anims.create({
+                key: 'jump',
+                frames: this.anims.generateFrameNumbers('player', { start: 15, end: 23 }),
+                frameRate: 12,
+                repeat: 0
+              })
               camera.startFollow(player)
+              player.isJumping = false
 
             },
             update () {
-              if (player.body.velocity.x === 0) player.anims.play('idle', true)
+              if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
-              // ESTE EL QUE S'executa continuament al Game loop -> 60 vegades per segon o FPS
+              this.debugText.setText('isJmping: ' + player.isJumping);
+
+              if (player.isJumping && player.isJumpingAnimation) {
+                player.anims.play('jump', false)
+                player.isJumpingAnimation = false
+
+
+              }
 
               // INPUT EVENTS
               if (this.cursors.left.isDown) {
                 player.setVelocityX(-160)
-                player.anims.play('runLeft', true)
+                if (! player.isJumping) player.anims.play('runLeft', true)
                 player.flipX = true
 
 
               } else if (this.cursors.right.isDown) {
                 player.setVelocityX(160)
-                player.anims.play('runRight', true)
+                if (! player.isJumping) player.anims.play('runRight', true)
                 player.flipX = false
 
 
@@ -113,11 +134,14 @@
 
               }
               if (this.cursors.up.isDown && player.body.onFloor()) {
-                player.setVelocityY(-200)
+                player.setVelocityY(-340) // 340
+                player.isJumping = true
+                player.isJumpingAnimation = true
+
               }
 
-              if (player.body.touching.down && player.y > 10) {
-                // this.dustSound.play()
+              if (player.body.onFloor() && player.body.velocity.y > -300) {
+                player.isJumping = false
               }
             }
           }
