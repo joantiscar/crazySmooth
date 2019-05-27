@@ -4,12 +4,41 @@
   <script>
     /* eslint-disable */
     import Phaser from 'phaser'
-    import _TILESET_SET from '../assets/tileSets/tileset.png'
-    import _JSON_MAP from '../assets/tileSets/map.json'
-    import _PLAYER from '../assets/tileSets/player.png'
+    import tileset from '../assets/tileSets/tileset.png'
+    import enemies_tileset from '../assets/tileSets/enemies.png'
+    import map_json from '../assets/tileSets/map.json'
+    import jugador from '../assets/tileSets/player.png'
     var player;
+    let coinLayer;
+    let enemyLayer;
+    let coins;
+    let enemies;
 
+    function createCoins () {
+      coinLayer.forEach(object => {
+        let obj = coins.create(object.x, object.y, 'tileset',57)
+        obj.body.width = object.width
+        obj.body.height = object.height
+      })
+    }
+    function  takeCoin(player, coin) {
+      coin.disableBody(true,true)
 
+    }
+    function createEnemies () {
+      enemyLayer.forEach(object => {
+        let tile
+        console.log(object)
+        if (object.properties[0].value === "goomba") tile = 50
+        let obj = enemies.create(object.x, object.y, 'enemies_tileset',tile)
+        obj.body.width = object.width
+        obj.body.height = object.height
+      })
+    }
+    function  takeDamage(player, enemy) {
+      enemy.disableBody(true,true)
+
+    }
     export default {
       name: 'Game',
       created() {
@@ -33,9 +62,10 @@
           scene: {
             preload() {
               console.log("PRELOAD");
-              this.load.image('tileset', _TILESET_SET)
-              this.load.tilemapTiledJSON("map",_JSON_MAP)
-              this.load.spritesheet('player',_PLAYER ,{ frameWidth: 50, frameHeight: 37 })
+              this.load.spritesheet('tileset', tileset, {frameWidth: 16, frameHeight: 16})
+              this.load.spritesheet('enemies_tileset', enemies_tileset, {frameWidth: 16, frameHeight: 16})
+              this.load.tilemapTiledJSON("map",map_json)
+              this.load.spritesheet('player',jugador ,{ frameWidth: 50, frameHeight: 37 })
 
             },
             create() {
@@ -43,11 +73,14 @@
               console.log("CREATED");
               let map = this.make.tilemap({ key: "map" })
               let tileset = map.addTilesetImage("tileset", "tileset")
+              let enemies_tileset = map.addTilesetImage("enemies_tileset", "enemies_tileset")
               let floor = map.createStaticLayer("floor", tileset, 0, 0)
               let elevation = map.createStaticLayer("elevation",tileset,0,0)
 
               floor.setCollisionByExclusion([-1]);
               elevation.setCollisionByExclusion([-1]);
+              coinLayer = map.getObjectLayer('items')['objects']
+              enemyLayer = map.getObjectLayer('enemies')['objects']
 
 
               // Habilitem un cursor per a les fletxes del teclat
@@ -71,6 +104,10 @@
               // // Animació de correr del player
               //
               this.physics.add.collider(player,floor)
+              this.physics.add.collider(player,elevation)
+
+              elevation.setCollisionByExclusion([-1]);
+
               //
               player.body.setSize(24, 37, 12, 0)
               this.anims.create({
@@ -99,6 +136,12 @@
               })
               camera.startFollow(player)
               player.isJumping = false
+              coins = this.physics.add.staticGroup()
+              enemies = this.physics.add.staticGroup()
+              createCoins()
+              createEnemies()
+              this.physics.add.overlap(player,coins,takeCoin,null,this)
+              this.physics.add.overlap(player,enemies,takeDamage,null,this)
 
             },
             update () {
