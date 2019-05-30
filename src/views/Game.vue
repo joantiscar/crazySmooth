@@ -23,7 +23,8 @@
   import dustSound from '../assets/dust.wav'
   import jumpSound from '../assets/jump.mp3'
   import deadSound from '../assets/dead.mp3'
-
+  import shapes_json from '../assets/particles/shapes.json'
+  import shapes_png from '../assets/particles/shapes.png'
 
 
   var player;
@@ -35,6 +36,8 @@
   let userWantsAudio;
   var spawnPoint;
 
+
+
   function createCoins() {
     coinLayer.forEach(object => {
       let obj = coins.create(object.x, object.y, 'tileset', 57)
@@ -45,12 +48,13 @@
 
   function takeCoin(player, coin) {
     coin.disableBody(true, true)
+    player.score = player.score + 50
     this.sound.play('coinSound')
 
   }
 
   function moveEnemies() {
-    for (let i = 1; i < 8; i++){
+    for (let i = 1; i < 8; i++) {
       if (this['enemy' + i].body.blocked.right) {
         this['enemy' + i].flipX = true
       }
@@ -61,9 +65,7 @@
     }
 
 
-
-
-    }
+  }
 
 
   function takeDamage(player, enemy) {
@@ -79,7 +81,8 @@
     shake.call(this)
     respawn.call(this)
   }
-  function respawn () {
+
+  function respawn() {
     if (this.coins) {
       this.coins.clear(true, true)
     }
@@ -90,8 +93,8 @@
     this.enemy5.body.x = 1500
     this.enemy6.body.x = 1700
     this.enemy7.body.x = 1000
-    for (let i = 1; i < 8; i++){
-        this['enemy' + i].flipX = false
+    for (let i = 1; i < 8; i++) {
+      this['enemy' + i].flipX = false
     }
     createCoins()
     spawnPoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
@@ -108,7 +111,7 @@
 
   }
 
-  function shake () {
+  function shake() {
     this.cameras.main.shake(200)
   }
 
@@ -172,6 +175,7 @@
       this.jumpSound = this.load.audio('jumpSound', jumpSound)
       this.coinSound = this.load.audio('coinSound', coinSound)
       this.deadSound = this.load.audio('deadSound', deadSound)
+      this.load.atlas('neu', shapes_png, shapes_json)
       this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/plugins/dist/rexvirtualjoystickplugin.min.js', true)
       var progressBar = this.add.graphics()
       var progressBox = this.add.graphics()
@@ -242,9 +246,12 @@
       backgroundMusic = this.sound.add('music')
       backgroundMusic.play()
       let background = this.add.image(0, 0, 'background').setOrigin(0).setDepth(0)
+      background.displayHeight = this.game.renderer.height
+      background.displayWidth = this.game.renderer.width
+      let title = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 - (this.game.renderer.height / 3), 'title')
 
-      this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 - 200, 'title')
-
+      title.displayHeight = this.game.renderer.height / 5
+      title.displayWidth = this.game.renderer.width / 3
 
       let start = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2, 'start').setDepth(1)
       start.displayHeight = 120
@@ -284,14 +291,15 @@
 
     create() {
       let victoryScreenMusic = this.sound.add('victoryMusic')
-        if (userWantsAudio){
-          backgroundMusic.stop()
-          victoryScreenMusic.play()
-        }
+      if (userWantsAudio) {
+        backgroundMusic.stop()
+        victoryScreenMusic.play()
+      }
 
       let victoryBackground = this.add.image(0, 0, 'victoryBackground').setOrigin(0).setDepth(0)
-
-      let start = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + 200, 'start').setDepth(1)
+      victoryBackground.displayHeight = this.game.renderer.height
+      victoryBackground.displayWidth = this.game.renderer.width
+      let start = this.add.image(this.game.renderer.width / 2, this.game.renderer.height / 2 + this.game.renderer.height / 4, 'start').setDepth(1)
       start.displayHeight = 120
       start.displayWidth = 120
       start.setInteractive()
@@ -315,13 +323,14 @@
     create() {
       let defeatScreenMusic = this.sound.add('defeatMusic')
 
-      if (userWantsAudio){
+      if (userWantsAudio) {
         backgroundMusic.stop()
         defeatScreenMusic.play()
       }
 
       let defeatBackground = this.add.image(0, 0, 'defeatBackground').setOrigin(0).setDepth(0)
-
+      defeatBackground.displayHeight = this.game.renderer.height
+      defeatBackground.displayWidth = this.game.renderer.width
       defeatBackground.setInteractive()
       defeatBackground.on('pointerdown', () => {
         if (userWantsAudio) {
@@ -365,6 +374,34 @@
       invisiblewalls.setCollisionByExclusion([-1]);
       coinLayer = this.map.getObjectLayer('items')['objects']
 
+      var particlesNeu = this.add.particles('neu')
+      particlesNeu.createEmitter(
+        {
+          "active": true,
+          "visible": true,
+          "collideBottom": true,
+          "collideLeft": true,
+          "collideRight": true,
+          "collideTop": true,
+          "on": true,
+          "particleBringToTop": true,
+          "radial": true,
+          "frame": {"frames": ["star_05"], "cycle": false, "quantity": 1},
+          "gravityY": 1200,
+          "timeScale": 1,
+          "alpha": 1,
+          "angle": {"min": 0, "max": 360, "ease": "Linear"},
+          "lifespan": 1000,
+          "maxVelocityX": 10000,
+          "maxVelocityY": 10000,
+          "quantity": 1,
+          "scale": 1,
+          "x": 2,
+          "y": 6,
+          "tint": [16777215],
+          "emitZone": {"source": new Phaser.Geom.Rectangle(0, 0, 3200, 50), "type": "random"}
+      })
+
 
       // Habilitem un cursor per a les fletxes del teclat
       this.cursors = this.input.keyboard.createCursorKeys();
@@ -377,10 +414,7 @@
 
       this.spawnPoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
 
-      this.debugText = this.add.text(16, 16, 'isJumping: false', {fontSize: '32px', fill: '#000'});
-      this.debugText.setColor('#FFFFFF')
 
-      this.debugText.setScrollFactor(0)
       player = this.physics.add.sprite(this.spawnPoint.x, this.spawnPoint.y, 'player');
       player.spawnPoint = this.spawnPoint
       player.lives = 3;
@@ -424,7 +458,7 @@
       coins = this.physics.add.staticGroup()
       enemies = this.physics.add.group()
       createCoins()
-
+        player.score = 0
 
       this.enemy1 = this.physics.add.sprite(300, 460, 'enemies_tileset', 50)
       this.enemy2 = this.physics.add.sprite(650, 460, 'enemies_tileset', 50)
@@ -471,17 +505,35 @@
         this.cursorKeysVirtual = this.joyStick.createCursorKeys()
 
       }
-
-
+      if (!this.sys.game.device.os.desktop) {
+        this.scoreText = this.add.text(100, 10, 'Puntuació: ' + player.score, {
+          fontSize: '16px',
+          fill: '#fff'
+        }).setScrollFactor(0).setDepth(200)
+        this.livesText = this.add.text(10, 10, 'Vides: ' + player.lives, {
+          fontSize: '16px',
+          fill: '#fff'
+        }).setScrollFactor(0).setDepth(200)
+      } else {
+        this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + player.score, {
+          fontSize: '16px',
+          fill: '#fff'
+        }).setScrollFactor(0).setDepth(200)
+        this.livesText = this.add.text((window.innerWidth / 3) + 50, (window.innerHeight / 4), 'Vides: ' + player.lives, {
+          fontSize: '16px',
+          fill: '#fff'
+        }).setScrollFactor(0).setDepth(200)
+      }
 
     }
 
     update() {
       this.input.update()
+      this.scoreText.setText('Puntuació: ' + player.score)
+      this.livesText.setText('Vides: ' + player.lives)
 
       if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
-      this.debugText.setText('isJmping: ' + player.isJumping);
 
       if (player.isJumping && player.isJumpingAnimation) {
         player.anims.play('jump', false)
@@ -520,7 +572,7 @@
           player.isJumpingAnimation = true
 
         }
-      }else {
+      } else {
         if (this.cursorKeysVirtual.left.isDown) {
           player.setVelocityX(-160)
           if (!player.isJumping) player.anims.play('runLeft', true)
@@ -601,10 +653,7 @@
 
       let spawnpoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
 
-      this.debugText = this.add.text(16, 16, 'isJumping: false', {fontSize: '32px', fill: '#000'});
-      this.debugText.setColor('#FFFFFF')
 
-      this.debugText.setScrollFactor(0)
       player = this.physics.add.sprite(spawnpoint.x, spawnpoint.y, 'player');
       player.lives = 3;
       //
@@ -661,7 +710,6 @@
     update() {
       if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
-      this.debugText.setText('isJmping: ' + player.isJumping);
 
       if (player.isJumping && player.isJumpingAnimation) {
         player.anims.play('jump', false)
