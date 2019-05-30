@@ -27,6 +27,7 @@
   let enemies;
   let backgroundMusic;
   let userWantsAudio;
+  var spawnPoint;
 
   function createCoins() {
     coinLayer.forEach(object => {
@@ -42,31 +43,18 @@
   }
 
   function moveEnemies() {
-      if (this.enemy1.body.blocked.right) {
-        this.enemy1.flipX = true
+    for (let i = 1; i < 8; i++){
+      if (this['enemy' + i].body.blocked.right) {
+        this['enemy' + i].flipX = true
       }
-      if (this.enemy1.body.blocked.left) {
-        this.enemy1.flipX = false
+      if (this['enemy' + i].body.blocked.left) {
+        this['enemy' + i].flipX = false
       }
-      this.enemy1.body.velocity.x = 100 * (this.enemy1.flipX ? -1 : 1)
+      this['enemy' + i].body.velocity.x = 100 * (this['enemy' + i].flipX ? -1 : 1)
+    }
 
 
-    if (this.enemy2.body.blocked.right) {
-      this.enemy2.flipX = true
-    }
-    if (this.enemy2.body.blocked.left) {
-      this.enemy2.flipX = false
-    }
-    this.enemy2.body.velocity.x = 100 * (this.enemy2.flipX ? -1 : 1)
 
-
-    if (this.enemy3.body.blocked.right) {
-      this.enemy3.flipX = true
-    }
-    if (this.enemy3.body.blocked.left) {
-      this.enemy3.flipX = false
-    }
-    this.enemy3.body.velocity.x = 100 * (this.enemy3.flipX ? -1 : 1)
 
     }
 
@@ -80,7 +68,6 @@
     this.time.delayedCall(400, function () {
       particles.destroy()
     })
-    player.disableBody(true, true)
     shake.call(this)
     respawn.call(this)
   }
@@ -88,14 +75,33 @@
     if (this.coins) {
       this.coins.clear(true, true)
     }
+    this.enemy1.body.x = 300
+    this.enemy2.body.x = 650
+    this.enemy3.body.x = 500
+    this.enemy4.body.x = 1100
+    this.enemy5.body.x = 1500
+    this.enemy6.body.x = 1700
+    this.enemy7.body.x = 1000
+    for (let i = 1; i < 8; i++){
+        this['enemy' + i].flipX = false
+    }
     createCoins()
+    spawnPoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
+
+    player.body.x = spawnPoint.x
+    player.body.y = spawnPoint.y
+    player.lives--
+
+    if (player.lives === 0) this.scene.start('Defeat')
+    else {
+
+    }
+
+
   }
+
   function shake () {
     this.cameras.main.shake(200)
-  }
-  function fall(player, fall) {
-
-    this.scene.start('Defeat')
   }
 
   function nextLevel(player, warp) {
@@ -325,21 +331,21 @@
     create() {
       const camera = this.cameras.main;
       console.log("CREATED");
-      let map = this.make.tilemap({key: "map"})
-      let tileset = map.addTilesetImage("tileset", "tileset")
-      let enemies_tileset = map.addTilesetImage("enemies_tileset", "enemies_tileset")
-      let floor = map.createStaticLayer("floor", tileset, 0, 0)
-      let invisiblewalls = map.createStaticLayer("invisiblewalls", '', 0, 0)
-      let elevation = map.createStaticLayer("elevation", tileset, 0, 0)
-      let death = map.createStaticLayer("death", '', 0, 0)
-      let warp = map.createStaticLayer("warp", tileset, 0, 0)
+      this.map = this.make.tilemap({key: "map"})
+      let tileset = this.map.addTilesetImage("tileset", "tileset")
+      let enemies_tileset = this.map.addTilesetImage("enemies_tileset", "enemies_tileset")
+      let floor = this.map.createStaticLayer("floor", tileset, 0, 0)
+      let invisiblewalls = this.map.createStaticLayer("invisiblewalls", '', 0, 0)
+      let elevation = this.map.createStaticLayer("elevation", tileset, 0, 0)
+      let death = this.map.createStaticLayer("death", '', 0, 0)
+      let warp = this.map.createStaticLayer("warp", tileset, 0, 0)
 
       floor.setCollisionByExclusion([-1]);
       death.setCollisionByExclusion([-1]);
       warp.setCollisionByExclusion([-1]);
       elevation.setCollisionByExclusion([-1]);
       invisiblewalls.setCollisionByExclusion([-1]);
-      coinLayer = map.getObjectLayer('items')['objects']
+      coinLayer = this.map.getObjectLayer('items')['objects']
 
 
       // Habilitem un cursor per a les fletxes del teclat
@@ -349,26 +355,24 @@
 
 
       // La càmara no sortirà del món
-      camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+      camera.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
-      let spawnpoint = map.findObject('player', obj => obj.name === 'spanwPoint');
+      this.spawnPoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
 
       this.debugText = this.add.text(16, 16, 'isJumping: false', {fontSize: '32px', fill: '#000'});
       this.debugText.setColor('#FFFFFF')
 
       this.debugText.setScrollFactor(0)
-      player = this.physics.add.sprite(spawnpoint.x, spawnpoint.y, 'player');
+      player = this.physics.add.sprite(this.spawnPoint.x, this.spawnPoint.y, 'player');
+      player.spawnPoint = this.spawnPoint
       player.lives = 3;
       //
       // // Animació de correr del player
       //
-      this.physics.add.collider(player, floor, function () {
-        console.log('ESTIC AN TERRA')
-
-      })
+      this.physics.add.collider(player, floor)
       this.physics.add.collider(player, elevation)
       this.physics.add.collider(player, warp, nextLevel, null, this)
-      this.physics.add.collider(player, death, fall, null, this)
+      this.physics.add.collider(player, death, takeDamage, null, this)
       elevation.setCollisionByExclusion([-1]);
 
       //
@@ -402,9 +406,15 @@
       coins = this.physics.add.staticGroup()
       enemies = this.physics.add.group()
       createCoins()
+
+
       this.enemy1 = this.physics.add.sprite(300, 460, 'enemies_tileset', 50)
-      this.enemy2 = this.physics.add.sprite(400, 460, 'enemies_tileset', 50)
+      this.enemy2 = this.physics.add.sprite(650, 460, 'enemies_tileset', 50)
       this.enemy3 = this.physics.add.sprite(500, 460, 'enemies_tileset', 50)
+      this.enemy4 = this.physics.add.sprite(1100, 460, 'enemies_tileset', 50)
+      this.enemy5 = this.physics.add.sprite(1500, 460, 'enemies_tileset', 50)
+      this.enemy6 = this.physics.add.sprite(1700, 460, 'enemies_tileset', 50)
+      this.enemy7 = this.physics.add.sprite(1000, 460, 'enemies_tileset', 50)
       this.anims.create({
         key: 'enemyMove',
         frames: this.anims.generateFrameNumbers('enemies_tileset', {start: 50, end: 51}),
@@ -413,24 +423,20 @@
       })
 
       this.enemy1.body.velocity.x = 100
-      this.enemy2.body.velocity.x = 100
-      this.enemy3.body.velocity.x = 100
-      this.physics.add.collider(this.enemy1, floor)
-      this.physics.add.collider(this.enemy2, floor)
-      this.physics.add.collider(this.enemy3, floor)
-      this.physics.add.collider(this.enemy1, elevation)
-      this.physics.add.collider(this.enemy2, elevation)
-      this.physics.add.collider(this.enemy3, elevation)
-      this.physics.add.collider(this.enemy1, invisiblewalls)
-      this.physics.add.collider(this.enemy2, invisiblewalls)
-      this.physics.add.collider(this.enemy3, invisiblewalls)
-      this.physics.add.collider(player, this.enemy1, takeDamage, null, this)
-      this.physics.add.collider(player, this.enemy2, takeDamage, null, this)
-      this.physics.add.collider(player, this.enemy3, takeDamage, null, this)
+      this.enemy2.body.velocity.x = 143
+      this.enemy3.body.velocity.x = 123
+      this.enemy4.body.velocity.x = 67
+      this.enemy5.body.velocity.x = 44
+      this.enemy6.body.velocity.x = 234
+      this.enemy7.body.velocity.x = 14
+      for (let i = 1; i < 8; i++) {
+        this.physics.add.collider(this['enemy' + i], floor)
+        this.physics.add.collider(this['enemy' + i], elevation)
+        this.physics.add.collider(this['enemy' + i], invisiblewalls)
+        this.physics.add.collider(player, this['enemy' + i], takeDamage, null, this)
+        this['enemy' + i].anims.play('enemyMove')
+      }
 
-      this.enemy1.anims.play('enemyMove')
-      this.enemy2.anims.play('enemyMove')
-      this.enemy3.anims.play('enemyMove')
       death.setCollisionByProperty({collides: true})
 
       this.physics.add.overlap(player, coins, takeCoin, null, this)
@@ -502,18 +508,18 @@
       const camera = this.cameras.main;
       console.log("CREATED");
       let map = this.make.tilemap({key: "map"})
-      let tileset = map.addTilesetImage("tileset", "tileset")
-      let floor = map.createStaticLayer("floor", tileset, 0, 0)
-      let elevation = map.createStaticLayer("elevation", tileset, 0, 0)
-      let death = map.createStaticLayer("death", '', 0, 0)
-      let warp = map.createStaticLayer("warp", tileset, 0, 0)
+      let tileset = this.map.addTilesetImage("tileset", "tileset")
+      let floor = this.map.createStaticLayer("floor", tileset, 0, 0)
+      let elevation = this.map.createStaticLayer("elevation", tileset, 0, 0)
+      let death = this.map.createStaticLayer("death", '', 0, 0)
+      let warp = this.map.createStaticLayer("warp", tileset, 0, 0)
 
       floor.setCollisionByExclusion([-1]);
       death.setCollisionByExclusion([-1]);
       warp.setCollisionByExclusion([-1]);
       elevation.setCollisionByExclusion([-1]);
-      coinLayer = map.getObjectLayer('items')['objects']
-      enemyLayer = map.getObjectLayer('enemies')['objects']
+      coinLayer = this.map.getObjectLayer('items')['objects']
+      enemyLayer = this.map.getObjectLayer('enemies')['objects']
 
 
       // Habilitem un cursor per a les fletxes del teclat
@@ -523,9 +529,9 @@
 
 
       // La càmara no sortirà del món
-      camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+      camera.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
-      let spawnpoint = map.findObject('player', obj => obj.name === 'spanwPoint');
+      let spawnpoint = this.map.findObject('player', obj => obj.name === 'spanwPoint');
 
       this.debugText = this.add.text(16, 16, 'isJumping: false', {fontSize: '32px', fill: '#000'});
       this.debugText.setColor('#FFFFFF')
@@ -542,7 +548,7 @@
       })
       this.physics.add.collider(player, elevation)
       this.physics.add.collider(player, warp, nextLevel, null, this)
-      this.physics.add.collider(player, death, fall, null, this)
+      this.physics.add.collider(player, death, takeDamage, null, this)
       elevation.setCollisionByExclusion([-1]);
 
       //
