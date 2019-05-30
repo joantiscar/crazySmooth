@@ -11,6 +11,7 @@
   import start from '../assets/start.png'
   import playMusic from '../assets/playMusic.png'
   import muteMusic from '../assets/muteMusic.png'
+  import dust from '../assets/dust.png'
   import background from '../assets/background.jpg'
   import victoryBackground from '../assets/victoryBackground.png'
   import defeatBackground from '../assets/defeatBackground.jpg'
@@ -40,22 +41,58 @@
 
   }
 
-  function createEnemies() {
-    enemyLayer.forEach(object => {
-      let tile
-      console.log(object)
-      if (object.properties[0].value === "goomba") tile = 50
-      let obj = enemies.create(object.x, object.y, 'enemies_tileset', tile)
-      obj.body.width = object.width
-      obj.body.height = object.height
-    })
-  }
+  function moveEnemies() {
+      if (this.enemy1.body.blocked.right) {
+        this.enemy1.flipX = true
+      }
+      if (this.enemy1.body.blocked.left) {
+        this.enemy1.flipX = false
+      }
+      this.enemy1.body.velocity.x = 100 * (this.enemy1.flipX ? -1 : 1)
+
+
+    if (this.enemy2.body.blocked.right) {
+      this.enemy2.flipX = true
+    }
+    if (this.enemy2.body.blocked.left) {
+      this.enemy2.flipX = false
+    }
+    this.enemy2.body.velocity.x = 100 * (this.enemy2.flipX ? -1 : 1)
+
+
+    if (this.enemy3.body.blocked.right) {
+      this.enemy3.flipX = true
+    }
+    if (this.enemy3.body.blocked.left) {
+      this.enemy3.flipX = false
+    }
+    this.enemy3.body.velocity.x = 100 * (this.enemy3.flipX ? -1 : 1)
+
+    }
+
 
   function takeDamage(player, enemy) {
-
-    console.log('Level2')
+    var particles = this.add.particles('dust')
+    this.dust = particles.createEmitter()
+    this.dust.setPosition(player.body.x, player.body.y)
+    this.dust.setSpeed(200)
+    this.dust.setBlendMode(Phaser.BlendModes.ADD)
+    this.time.delayedCall(400, function () {
+      particles.destroy()
+    })
+    player.disableBody(true, true)
+    shake.call(this)
+    respawn.call(this)
   }
-
+  function respawn () {
+    if (this.coins) {
+      this.coins.clear(true, true)
+    }
+    createCoins()
+  }
+  function shake () {
+    this.cameras.main.shake(200)
+  }
   function fall(player, fall) {
 
     this.scene.start('Defeat')
@@ -83,7 +120,8 @@
             },
             debug: true
           }
-        }
+        },
+        pixelArt: true
       }
       // eslint-disable-next-line
       new Phaser.Game(config)
@@ -108,6 +146,7 @@
       this.load.image('victoryBackground', victoryBackground)
       this.load.image('defeatBackground', defeatBackground)
       this.load.image('title', title)
+      this.load.image('dust', dust)
       this.load.audio('music', music)
       this.load.audio('victoryMusic', victoryMusic)
       this.load.audio('defeatMusic', defeatMusic)
@@ -290,6 +329,7 @@
       let tileset = map.addTilesetImage("tileset", "tileset")
       let enemies_tileset = map.addTilesetImage("enemies_tileset", "enemies_tileset")
       let floor = map.createStaticLayer("floor", tileset, 0, 0)
+      let invisiblewalls = map.createStaticLayer("invisiblewalls", '', 0, 0)
       let elevation = map.createStaticLayer("elevation", tileset, 0, 0)
       let death = map.createStaticLayer("death", '', 0, 0)
       let warp = map.createStaticLayer("warp", tileset, 0, 0)
@@ -298,8 +338,8 @@
       death.setCollisionByExclusion([-1]);
       warp.setCollisionByExclusion([-1]);
       elevation.setCollisionByExclusion([-1]);
+      invisiblewalls.setCollisionByExclusion([-1]);
       coinLayer = map.getObjectLayer('items')['objects']
-      enemyLayer = map.getObjectLayer('enemies')['objects']
 
 
       // Habilitem un cursor per a les fletxes del teclat
@@ -360,9 +400,37 @@
       camera.startFollow(player)
       player.isJumping = false
       coins = this.physics.add.staticGroup()
-      enemies = this.physics.add.staticGroup()
+      enemies = this.physics.add.group()
       createCoins()
-      createEnemies()
+      this.enemy1 = this.physics.add.sprite(300, 460, 'enemies_tileset', 50)
+      this.enemy2 = this.physics.add.sprite(400, 460, 'enemies_tileset', 50)
+      this.enemy3 = this.physics.add.sprite(500, 460, 'enemies_tileset', 50)
+      this.anims.create({
+        key: 'enemyMove',
+        frames: this.anims.generateFrameNumbers('enemies_tileset', {start: 50, end: 51}),
+        frameRate: 6,
+        repeat: -1
+      })
+
+      this.enemy1.body.velocity.x = 100
+      this.enemy2.body.velocity.x = 100
+      this.enemy3.body.velocity.x = 100
+      this.physics.add.collider(this.enemy1, floor)
+      this.physics.add.collider(this.enemy2, floor)
+      this.physics.add.collider(this.enemy3, floor)
+      this.physics.add.collider(this.enemy1, elevation)
+      this.physics.add.collider(this.enemy2, elevation)
+      this.physics.add.collider(this.enemy3, elevation)
+      this.physics.add.collider(this.enemy1, invisiblewalls)
+      this.physics.add.collider(this.enemy2, invisiblewalls)
+      this.physics.add.collider(this.enemy3, invisiblewalls)
+      this.physics.add.collider(player, this.enemy1, takeDamage, null, this)
+      this.physics.add.collider(player, this.enemy2, takeDamage, null, this)
+      this.physics.add.collider(player, this.enemy3, takeDamage, null, this)
+
+      this.enemy1.anims.play('enemyMove')
+      this.enemy2.anims.play('enemyMove')
+      this.enemy3.anims.play('enemyMove')
       death.setCollisionByProperty({collides: true})
 
       this.physics.add.overlap(player, coins, takeCoin, null, this)
@@ -411,6 +479,8 @@
       if (player.body.onFloor() && player.body.velocity.y > -300) {
         player.isJumping = false
       }
+
+      moveEnemies.call(this)
     }
   }
 
@@ -423,7 +493,6 @@
     preload() {
       console.log("PRELOAD");
       this.load.spritesheet('tileset', tileset, {frameWidth: 16, frameHeight: 16})
-      this.load.spritesheet('enemies_tileset', enemies_tileset, {frameWidth: 16, frameHeight: 16})
       this.load.tilemapTiledJSON("map", map_json)
       this.load.spritesheet('player', jugador, {frameWidth: 50, frameHeight: 37})
 
@@ -434,7 +503,6 @@
       console.log("CREATED");
       let map = this.make.tilemap({key: "map"})
       let tileset = map.addTilesetImage("tileset", "tileset")
-      let enemies_tileset = map.addTilesetImage("enemies_tileset", "enemies_tileset")
       let floor = map.createStaticLayer("floor", tileset, 0, 0)
       let elevation = map.createStaticLayer("elevation", tileset, 0, 0)
       let death = map.createStaticLayer("death", '', 0, 0)
@@ -506,7 +574,7 @@
       camera.startFollow(player)
       player.isJumping = false
       coins = this.physics.add.staticGroup()
-      enemies = this.physics.add.staticGroup()
+      enemies = this.physics.add.group()
       createCoins()
       createEnemies()
       death.setCollisionByProperty({collides: true})
