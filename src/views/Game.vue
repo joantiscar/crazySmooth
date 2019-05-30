@@ -14,6 +14,7 @@
   import dust from '../assets/dust.png'
   import background from '../assets/background.jpg'
   import victoryBackground from '../assets/victoryBackground.png'
+  import gameBackground from '../assets/gameBackground.png'
   import defeatBackground from '../assets/defeatBackground.jpg'
   import title from '../assets/title.png'
   import music from '../assets/music.mp3'
@@ -23,6 +24,7 @@
   import dustSound from '../assets/dust.wav'
   import jumpSound from '../assets/jump.mp3'
   import deadSound from '../assets/dead.mp3'
+  import shine from '../assets/shine.png'
   import shapes_json from '../assets/particles/shapes.json'
   import shapes_png from '../assets/particles/shapes.png'
 
@@ -50,7 +52,15 @@
     coin.disableBody(true, true)
     player.score = player.score + 50
     this.sound.play('coinSound')
-
+    var shine = this.add.particles('shine')
+    this.shine = shine.createEmitter()
+    this.shine.setPosition(coin.body.x, coin.body.y)
+    this.shine.setSpeed(200)
+    this.shine.setScale(0.1)
+    this.shine.setBlendMode(Phaser.BlendModes.ADD)
+    this.time.delayedCall(100, function () {
+      shine.destroy()
+    })
   }
 
   function moveEnemies() {
@@ -165,7 +175,9 @@
       this.load.image('playMusic', playMusic)
       this.load.image('background', background)
       this.load.image('victoryBackground', victoryBackground)
+      this.load.image('shine', shine)
       this.load.image('defeatBackground', defeatBackground)
+      this.load.image('gameBackground', gameBackground)
       this.load.image('title', title)
       this.load.image('dust', dust)
       this.load.audio('music', music)
@@ -357,6 +369,10 @@
       if (this.sys.game.device.os.desktop) {
         this.cameras.main.setZoom(2)
       }
+      let gameBackground = this.add.image(0, 0, 'gameBackground').setOrigin(0).setDepth(0)
+      gameBackground.displayHeight = this.game.renderer.height
+      gameBackground.displayWidth = this.game.renderer.width
+      gameBackground.setScrollFactor(0)
       console.log("CREATED");
       this.map = this.make.tilemap({key: "map"})
       let tileset = this.map.addTilesetImage("tileset", "tileset")
