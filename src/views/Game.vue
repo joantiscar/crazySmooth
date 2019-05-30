@@ -19,6 +19,12 @@
   import music from '../assets/music.mp3'
   import victoryMusic from '../assets/victoryMusic.mp3'
   import defeatMusic from '../assets/defeatMusic.mp3'
+  import coinSound from '../assets/coin.mp3'
+  import dustSound from '../assets/dust.wav'
+  import jumpSound from '../assets/jump.mp3'
+  import deadSound from '../assets/dead.mp3'
+
+
 
   var player;
   let coinLayer;
@@ -39,6 +45,7 @@
 
   function takeCoin(player, coin) {
     coin.disableBody(true, true)
+    this.sound.play('coinSound')
 
   }
 
@@ -68,6 +75,7 @@
     this.time.delayedCall(400, function () {
       particles.destroy()
     })
+    this.sound.play('deadSound')
     shake.call(this)
     respawn.call(this)
   }
@@ -114,8 +122,13 @@
 
       let config = {
         type: Phaser.AUTO,
-        width: window.innerWidth - 50,
-        height: window.innerHeight - 50,
+        scale: {
+          mode: Phaser.Scale.FIT,
+          parent: 'game',
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+          width: window.innerWidth,
+          height: window.innerHeight
+        },
         scene: [Loading, Menu, Level1, Level2, Victory, Defeat],
         // scenes: [Loading, Menu, Level1, Level2, Victory, Defeat],
         physics: {
@@ -123,8 +136,7 @@
           arcade: {
             gravity: {
               y: 700
-            },
-            debug: true
+            }
           }
         },
         pixelArt: true
@@ -156,8 +168,11 @@
       this.load.audio('music', music)
       this.load.audio('victoryMusic', victoryMusic)
       this.load.audio('defeatMusic', defeatMusic)
-
-
+      this.dustSound = this.load.audio('dustSound', dustSound)
+      this.jumpSound = this.load.audio('jumpSound', jumpSound)
+      this.coinSound = this.load.audio('coinSound', coinSound)
+      this.deadSound = this.load.audio('deadSound', deadSound)
+      this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/plugins/dist/rexvirtualjoystickplugin.min.js', true)
       var progressBar = this.add.graphics()
       var progressBox = this.add.graphics()
       progressBox.fillStyle(0x222222, 0.8)
@@ -330,6 +345,9 @@
 
     create() {
       const camera = this.cameras.main;
+      if (this.sys.game.device.os.desktop) {
+        this.cameras.main.setZoom(2)
+      }
       console.log("CREATED");
       this.map = this.make.tilemap({key: "map"})
       let tileset = this.map.addTilesetImage("tileset", "tileset")
@@ -442,48 +460,98 @@
       this.physics.add.overlap(player, coins, takeCoin, null, this)
       this.physics.add.overlap(player, enemies, takeDamage, null, this)
 
+      if (!this.sys.game.device.os.desktop) {
+        this.joyStick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+          x: this.cameras.main.centerX - 250,
+          y: this.cameras.main.centerY + 100,
+          radius: 40,
+          base: this.add.graphics().fillStyle(0x888888).fillCircle(0, 0, 50),
+          thumb: this.add.graphics().fillStyle(0xcccccc).fillCircle(0, 0, 30)
+        })
+        this.cursorKeysVirtual = this.joyStick.createCursorKeys()
+
+      }
+
+
+
     }
 
     update() {
+      this.input.update()
+
       if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
       this.debugText.setText('isJmping: ' + player.isJumping);
 
       if (player.isJumping && player.isJumpingAnimation) {
         player.anims.play('jump', false)
+        this.sound.play('jumpSound')
+
         player.isJumpingAnimation = false
 
 
       }
 
       // INPUT EVENTS
-      if (this.cursors.left.isDown) {
-        player.setVelocityX(-160)
-        if (!player.isJumping) player.anims.play('runLeft', true)
-        player.flipX = true
+
+      if (this.sys.game.device.os.desktop) {
+
+        if (this.cursors.left.isDown) {
+          player.setVelocityX(-160)
+          if (!player.isJumping) player.anims.play('runLeft', true)
+          player.flipX = true
 
 
-      } else if (this.cursors.right.isDown) {
-        player.setVelocityX(160)
-        if (!player.isJumping) player.anims.play('runRight', true)
-        player.flipX = false
+        } else if (this.cursors.right.isDown) {
+          player.setVelocityX(160)
+          if (!player.isJumping) player.anims.play('runRight', true)
+          player.flipX = false
 
 
-      } else {
-        if (player.body.velocity.x > 0) player.setVelocityX(player.body.velocity.x - 20)
-        if (player.body.velocity.x < 0) player.setVelocityX(player.body.velocity.x + 20)
-        if (player.body.velocity.x < 20 && player.body.velocity.x > -20) player.setVelocityX(0)
+        } else {
+          if (player.body.velocity.x > 0) player.setVelocityX(player.body.velocity.x - 20)
+          if (player.body.velocity.x < 0) player.setVelocityX(player.body.velocity.x + 20)
+          if (player.body.velocity.x < 20 && player.body.velocity.x > -20) player.setVelocityX(0)
 
-      }
-      if (this.cursors.up.isDown && player.body.onFloor()) {
-        player.setVelocityY(-340) // 340
-        player.isJumping = true
-        player.isJumpingAnimation = true
+        }
+        if (this.cursors.up.isDown && player.body.onFloor()) {
+          player.setVelocityY(-340) // 340
+          player.isJumping = true
+          player.isJumpingAnimation = true
 
+        }
+      }else {
+        if (this.cursorKeysVirtual.left.isDown) {
+          player.setVelocityX(-160)
+          if (!player.isJumping) player.anims.play('runLeft', true)
+          player.flipX = true
+
+
+        } else if (this.cursorKeysVirtual.right.isDown) {
+          player.setVelocityX(160)
+          if (!player.isJumping) player.anims.play('runRight', true)
+          player.flipX = false
+
+
+        } else {
+          if (player.body.velocity.x > 0) player.setVelocityX(player.body.velocity.x - 20)
+          if (player.body.velocity.x < 0) player.setVelocityX(player.body.velocity.x + 20)
+          if (player.body.velocity.x < 20 && player.body.velocity.x > -20) player.setVelocityX(0)
+
+        }
+        if (this.cursorKeysVirtual.up.isDown && player.body.onFloor()) {
+          player.setVelocityY(-340) // 340
+          player.isJumping = true
+          player.isJumpingAnimation = true
+
+        }
       }
 
       if (player.body.onFloor() && player.body.velocity.y > -300) {
+        if (player.isJumping) this.sound.play('dustSound')
         player.isJumping = false
+
+
       }
 
       moveEnemies.call(this)
