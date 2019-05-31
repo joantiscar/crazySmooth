@@ -14,9 +14,11 @@
   import muteMusic from '../assets/muteMusic.png'
   import dust from '../assets/dust.png'
   import background from '../assets/background.jpg'
-  import victoryBackground from '../assets/victoryBackground.png'
+  import victoryBackground from '../assets/victoryBackground.jpg'
   import gameBackground from '../assets/gameBackground.png'
   import defeatBackground from '../assets/defeatBackground.jpg'
+  import level1LoadingBackground from '../assets/level1LoadingBackground.jpg'
+  import level2LoadingBackground from '../assets/level2LoadingBackground.jpg'
   import title from '../assets/title.png'
   import music from '../assets/music.mp3'
   import victoryMusic from '../assets/victoryMusic.mp3'
@@ -30,14 +32,17 @@
   import shapes_png from '../assets/particles/shapes.png'
 
 
-  var player;
+  let player;
   let coinLayer;
   let enemyLayer;
   let coins;
   let enemies;
   let backgroundMusic;
   let userWantsAudio;
-  var spawnPoint;
+  let spawnPoint;
+  let vides
+  let totalScore = 0
+  let levelScore = 0
 
 
 
@@ -51,9 +56,9 @@
 
   function takeCoin(player, coin) {
     coin.disableBody(true, true)
-    player.score = player.score + 50
+    levelScore = levelScore + 50
     this.sound.play('coinSound')
-    var shine = this.add.particles('shine')
+    let shine = this.add.particles('shine')
     this.shine = shine.createEmitter()
     this.shine.setPosition(coin.body.x, coin.body.y)
     this.shine.setSpeed(200)
@@ -80,7 +85,7 @@
 
 
   function takeDamage(player, enemy) {
-    var particles = this.add.particles('dust')
+    let particles = this.add.particles('dust')
     this.dust = particles.createEmitter()
     this.dust.setPosition(player.body.x, player.body.y)
     this.dust.setSpeed(200)
@@ -94,8 +99,9 @@
   }
 
   function respawn() {
-    if (this.coins) {
-      this.coins.clear(true, true)
+
+    if (coins) {
+      coins.clear(true, true)
     }
     this.enemy1.body.x = 300
     this.enemy2.body.x = 650
@@ -112,9 +118,9 @@
 
     player.body.x = spawnPoint.x
     player.body.y = spawnPoint.y
-    player.lives--
-
-    if (player.lives === 0) this.scene.start('Defeat')
+    vides--
+    levelScore = 0
+    if (vides === 0) this.scene.start('Defeat')
     else {
 
     }
@@ -127,6 +133,9 @@
   }
 
   function nextLevel(player, warp) {
+    this.scene.start('Level2Loading')
+  }
+  function winGame(player, warp) {
     this.scene.start('Victory')
   }
 
@@ -143,7 +152,7 @@
           width: window.innerWidth,
           height: window.innerHeight
         },
-        scene: [Loading, Menu, Level1, Level2, Victory, Defeat],
+        scene: [Loading, Menu, Level1Loading, Level1, Level2Loading, Level2, Victory, Defeat],
         // scenes: [Loading, Menu, Level1, Level2, Victory, Defeat],
         physics: {
           default: 'arcade',
@@ -176,6 +185,8 @@
       this.load.image('muteMusic', muteMusic)
       this.load.image('playMusic', playMusic)
       this.load.image('background', background)
+      this.load.image('level1LoadingBackground', level1LoadingBackground)
+      this.load.image('level2LoadingBackground', level2LoadingBackground)
       this.load.image('victoryBackground', victoryBackground)
       this.load.image('shine', shine)
       this.load.image('defeatBackground', defeatBackground)
@@ -191,13 +202,13 @@
       this.deadSound = this.load.audio('deadSound', deadSound)
       this.load.atlas('neu', shapes_png, shapes_json)
       this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/plugins/dist/rexvirtualjoystickplugin.min.js', true)
-      var progressBar = this.add.graphics()
-      var progressBox = this.add.graphics()
+      let progressBar = this.add.graphics()
+      let progressBox = this.add.graphics()
       progressBox.fillStyle(0x222222, 0.8)
-      var width = this.cameras.main.width
-      var height = this.cameras.main.height
+      let width = this.cameras.main.width
+      let height = this.cameras.main.height
       progressBox.fillRect(window.x = width * 0.5 - 165, window.y = height * 0.5 - 75, 320, 50)
-      var loadingText = this.make.text({
+      let loadingText = this.make.text({
         x: width * 0.5,
         y: height * 0.5 - 100,
         text: 'Loading...',
@@ -207,7 +218,7 @@
         }
       })
       loadingText.setOrigin(0.5, 0.5)
-      var percentText = this.make.text({
+      let percentText = this.make.text({
         x: width * 0.5,
         y: height * 0.5 - 50,
         text: '0%',
@@ -217,7 +228,7 @@
         }
       })
       percentText.setOrigin(0.5, 0.5)
-      var assetText = this.make.text({
+      let assetText = this.make.text({
         x: width * 0.5,
         y: height * 0.5 - 5,
         text: '',
@@ -272,7 +283,7 @@
       start.displayWidth = 120
       start.setInteractive()
       start.on('pointerdown', () => {
-        this.scene.start('Level1')
+        this.scene.start('Level1Loading')
       })
       let playMusicButton = this.add.image(this.game.renderer.width / 2 - 100, this.game.renderer.height / 2, 'playMusic').setDepth(1)
       playMusicButton.displayHeight = 40
@@ -317,6 +328,10 @@
       start.displayHeight = 120
       start.displayWidth = 120
       start.setInteractive()
+      this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + (levelScore + totalScore), {
+        fontSize: '16px',
+        fill: '#fff'
+      }).setScrollFactor(0).setDepth(200)
       start.on('pointerdown', () => {
         if (userWantsAudio) {
           victoryScreenMusic.stop()
@@ -357,6 +372,23 @@
     }
   }
 
+  class Level1Loading extends Phaser.Scene {
+    constructor() {
+      super({key: 'Level1Loading'})
+    }
+
+    create() {
+
+      let level1LoadingBackground = this.add.image(0, 0, 'level1LoadingBackground').setOrigin(0).setDepth(0)
+      level1LoadingBackground.displayHeight = this.game.renderer.height
+      level1LoadingBackground.displayWidth = this.game.renderer.width
+      level1LoadingBackground.setInteractive()
+      setTimeout(() =>  {
+        this.scene.start('Level1')
+      }, 2000);
+    }
+  }
+
   class Level1 extends Phaser.Scene {
 
     constructor() {
@@ -367,6 +399,8 @@
     }
 
     create() {
+      totalScore = 0
+      levelScore = 0
       const camera = this.cameras.main;
       if (this.sys.game.device.os.desktop) {
         this.cameras.main.setZoom(2)
@@ -393,7 +427,7 @@
       invisiblewalls.setCollisionByExclusion([-1]);
       coinLayer = this.map.getObjectLayer('items')['objects']
 
-      var particlesNeu = this.add.particles('neu')
+      let particlesNeu = this.add.particles('neu')
       particlesNeu.createEmitter(
         {
           "active": true,
@@ -419,7 +453,7 @@
           "y": 6,
           "tint": [16777215],
           "emitZone": {"source": new Phaser.Geom.Rectangle(0, 0, 3200, 50), "type": "random"}
-      })
+        })
 
 
       // Habilitem un cursor per a les fletxes del teclat
@@ -436,7 +470,7 @@
 
       player = this.physics.add.sprite(this.spawnPoint.x, this.spawnPoint.y, 'player');
       player.spawnPoint = this.spawnPoint
-      player.lives = 3;
+      vides = 3;
       //
       // // Animació de correr del player
       //
@@ -477,7 +511,7 @@
       coins = this.physics.add.staticGroup()
       enemies = this.physics.add.group()
       createCoins()
-        player.score = 0
+      levelScore = 0
 
       this.enemy1 = this.physics.add.sprite(300, 460, 'enemies_tileset', 50)
       this.enemy2 = this.physics.add.sprite(650, 460, 'enemies_tileset', 50)
@@ -525,20 +559,20 @@
 
       }
       if (!this.sys.game.device.os.desktop) {
-        this.scoreText = this.add.text(100, 10, 'Puntuació: ' + player.score, {
+        this.scoreText = this.add.text(100, 10, 'Puntuació: ' + levelScore, {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
-        this.livesText = this.add.text(10, 10, 'Vides: ' + player.lives, {
+        this.livesText = this.add.text(10, 10, 'Vides: ' + vides, {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
       } else {
-        this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + player.score, {
+        this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + (levelScore + totalScore), {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
-        this.livesText = this.add.text((window.innerWidth / 3) + 50, (window.innerHeight / 4), 'Vides: ' + player.lives, {
+        this.livesText = this.add.text((window.innerWidth / 3) + 50, (window.innerHeight / 4), 'Vides: ' + vides, {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
@@ -548,8 +582,8 @@
 
     update() {
       this.input.update()
-      this.scoreText.setText('Puntuació: ' + player.score)
-      this.livesText.setText('Vides: ' + player.lives)
+      this.scoreText.setText('Puntuació: ' + (levelScore + totalScore))
+      this.livesText.setText('Vides: ' + vides)
 
       if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
@@ -629,12 +663,31 @@
     }
   }
 
+  class Level2Loading extends Phaser.Scene {
+    constructor() {
+      super({key: 'Level2Loading'})
+    }
+
+    create() {
+
+      let level2LoadingBackground = this.add.image(0, 0, 'level2LoadingBackground').setOrigin(0).setDepth(0)
+      level2LoadingBackground.displayHeight = this.game.renderer.height
+      level2LoadingBackground.displayWidth = this.game.renderer.width
+      level2LoadingBackground.setInteractive()
+      setTimeout(() =>  {
+        this.scene.start('Level2')
+      }, 2000);
+    }
+  }
+
   class Level2 extends Phaser.Scene {
 
     constructor() {
       super({key: 'Level2'})
     }
     create() {
+      totalScore = levelScore
+      levelScore = 0
       const camera = this.cameras.main;
       if (this.sys.game.device.os.desktop) {
         this.cameras.main.setZoom(2)
@@ -660,7 +713,7 @@
       invisiblewalls.setCollisionByExclusion([-1]);
       coinLayer = this.map.getObjectLayer('items')['objects']
 
-      var particlesNeu = this.add.particles('neu')
+      let particlesNeu = this.add.particles('neu')
       particlesNeu.createEmitter(
         {
           "active": true,
@@ -708,7 +761,7 @@
       //
       this.physics.add.collider(player, floor)
       this.physics.add.collider(player, elevation)
-      this.physics.add.collider(player, warp, nextLevel, null, this)
+      this.physics.add.collider(player, warp, winGame, null, this)
       this.physics.add.collider(player, death, takeDamage, null, this)
       elevation.setCollisionByExclusion([-1]);
 
@@ -750,9 +803,9 @@
       this.enemy4 = this.physics.add.sprite(1100, 281, 'enemies_tileset',280)
       this.enemy5 = this.physics.add.sprite(1500, 281, 'enemies_tileset',280)
       this.enemy6 = this.physics.add.sprite(1700, 281, 'enemies_tileset',280)
-      this.enemy7 = this.physics.add.sprite(1000, 281, 'enemies_tileset',280)
+      this.enemy7 = this.physics.add.sprite(1750, 281, 'enemies_tileset',280)
       this.anims.create({
-        key: 'enemyMove',
+        key: 'enemy2Move',
         frames: this.anims.generateFrameNumbers('enemies_tileset', {start: 280, end: 281}),
         frameRate: 6,
         repeat: -1
@@ -770,7 +823,7 @@
         this.physics.add.collider(this['enemy' + i], elevation)
         this.physics.add.collider(this['enemy' + i], invisiblewalls)
         this.physics.add.collider(player, this['enemy' + i], takeDamage, null, this)
-        this['enemy' + i].anims.play('enemyMove')
+        this['enemy' + i].anims.play('enemy2Move')
       }
 
       death.setCollisionByProperty({collides: true})
@@ -790,20 +843,20 @@
 
       }
       if (!this.sys.game.device.os.desktop) {
-        this.scoreText = this.add.text(100, 10, 'Puntuació: ' + player.score, {
+        this.scoreText = this.add.text(100, 10, 'Puntuació: ' + (levelScore + totalScore), {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
-        this.livesText = this.add.text(10, 10, 'Vides: ' + player.lives, {
+        this.livesText = this.add.text(10, 10, 'Vides: ' + vides, {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
       } else {
-        this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + player.score, {
+        this.scoreText = this.add.text((window.innerWidth / 3) - 100, (window.innerHeight / 4), 'Puntuació: ' + (levelScore + totalScore), {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
-        this.livesText = this.add.text((window.innerWidth / 3) + 50, (window.innerHeight / 4), 'Vides: ' + player.lives, {
+        this.livesText = this.add.text((window.innerWidth / 3) + 50, (window.innerHeight / 4), 'Vides: ' + vides, {
           fontSize: '16px',
           fill: '#fff'
         }).setScrollFactor(0).setDepth(200)
@@ -813,8 +866,8 @@
 
     update() {
       this.input.update()
-      this.scoreText.setText('Puntuació: ' + player.score)
-      this.livesText.setText('Vides: ' + player.lives)
+      this.scoreText.setText('Puntuació: ' + (levelScore + totalScore))
+      this.livesText.setText('Vides: ' + vides)
 
       if (player.body.velocity.x === 0 && !player.isJumping) player.anims.play('idle', true)
 
