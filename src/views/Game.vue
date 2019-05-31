@@ -14,7 +14,7 @@
   import muteMusic from '../assets/muteMusic.png'
   import dust from '../assets/dust.png'
   import background from '../assets/background.jpg'
-  import victoryBackground from '../assets/victoryBackground.jpg'
+  import victoryBackground from '../assets/victoryBackground.png'
   import gameBackground from '../assets/gameBackground.png'
   import defeatBackground from '../assets/defeatBackground.jpg'
   import level1LoadingBackground from '../assets/level1LoadingBackground.jpg'
